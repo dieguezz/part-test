@@ -4,13 +4,14 @@
 <script>
 /* eslint-disable */
 const THREE = require('three')
-const OrbitControls = require("three-orbit-controls")(THREE);
+const OrbitControls = require("three-orbit-controls")(THREE)
+import { TweenMax } from 'gsap/TweenMax'
 
 export default {
   name: 'home',
   data() {
     return {
-      camera: '', scene: '', renderer: '', geo: '', mat: '', fontLoader: '', objLoader: '', orbitRadius: 1, fontMesh: null
+      camera: '', scene: '', renderer: '', geo: '', mat: '', fontLoader: '', objLoader: '', orbitRadius: 1, fontMesh: null, originalVertices: null
     };
   },
   methods: {
@@ -29,32 +30,38 @@ export default {
 
         // this.scene.add(fontMesh);
 
-        this.fontMesh.geometry.vertices.forEach((vert, i) => {
+        this.originalVertices = this.fontMesh.geometry.vertices
+        this.originalVertices.forEach((vert, i) => {
             const geo = new THREE.BoxGeometry(0.1, 0.1, 0.1);
             const mesh = new THREE.Mesh(geo, this.mat);
-
-            mesh.position.set(vert.x, vert.y, vert.z);
-
-            this.scene.add(mesh);
+            const pivot = new THREE.Object3D()
+            pivot.add(mesh)
+            pivot.position.set(vert.x, vert.y, vert.z);
+            this.scene.add(pivot)
+            // this.scene.add(mesh);
         })
 
         this.animate();
     },
+    randomFloat: function(min, max) {
+      return Math.random() * (max - min) + min;
+    },
     animate: function() {
-        requestAnimationFrame(this.animate);
-        this.fontMesh.geometry.vertices.forEach((vert, i) => {
+        this.originalVertices.forEach((vert, i) => {
           const mesh = this.scene.children[i]
-          // mesh.rotation.x += 0.1
-          // mesh.position.x = Math.cos(vert.x * date % i)
-          const date = new Date()
-          const vert1 = vert
-          vert1.y = Math.sin(0.001 * date)
-          vert1.x = Math.cos(0.001 * date)
-          mesh.rotation.x += 0.01
-          this.rotateAboutPoint(mesh, vert1, vert, THREE.Math.degToRad(0.1))
-          // mesh.position.y = Math.sin(date) * vert.y
+          const posX = vert.x
+          const posY = vert.y
+          const posZ = vert.z
+          const x = this.randomFloat(posX -8, posX + 8)
+          const y = this.randomFloat(posY -8, posY + 8)
+          const z = this.randomFloat(posZ -8, posZ + 8)
+          mesh.rotation.x += 0.1
+          mesh.rotation.y += 0.1
+          mesh.rotation.z += 0.1
+          TweenMax.to(mesh.position, 20, { x, y, z })
         })
         this.renderer.render(this.scene, this.camera);
+        requestAnimationFrame(this.animate);
     },
 
     rotateAboutPoint: function(obj, point, axis, theta, pointIsWorld) {
